@@ -1,26 +1,46 @@
 = mm-space
 
-* FIX (url)
+* http://www.github.com/andrewcsmith/mm-space
 
 == DESCRIPTION:
 
-FIX (describe your package)
+MM::Space is a framework for working with Morphological Metrics and
+Morphological Mutations in Ruby. A core component of MM::Space is that it has a
+notion of global distance throughout a series of measurements or
+transformations. This is what "Space" implies. It uses coworker libraries
+MM::Metric and MM::Mutation to drive these measurements and transformations.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+* Nothing is implemented. (Does this qualify as a "FEATURE" or a "PROBLEM"? We
+  will never know.) 
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+See bin/mm_space for a full example implementation (with comments)
+
+    x = MM::Metric.olm intra_delta: :tenney, inter_delta: :abs
+    y = MM::Metric.olm intra_delta: :ratio, inter_delta: :abs
+    space = Space.new [x, y]
+    distances = [[0.1, -0.1], [0.2, -0.2], [0.3, -0.3]]
+    start = %w(1/1 5/4 3/2 8/7 9/8).map {|x| MM::Ratio.from_s(x)}
+    space.enter do |s|
+      morph start, to: distances.each
+      morph start, to: distances.each, threads: 4
+      # Change some parameter of the space
+      s.lowest = start.map {|x| MM::Ratio.from_s("8/1")}
+      # Etc. etc...
+    end
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* MM
+* MM::Metric
+* MM::Ratio
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* Will fix when I get this all implemented
 
 == DEVELOPERS:
 
