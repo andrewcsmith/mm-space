@@ -1,0 +1,92 @@
+#!/usr/bin/env ruby
+#
+# # MM::Space FOUR POINT OH
+# 
+# ## What is MM::Space? 
+# 
+# MM::Space is a framework for working with Morphological Metrics and
+# Morphological Mutations in Ruby. A core component of MM::Space is that it has
+# a notion of global distance throughout a series of measurements or
+# transformations. This is what "Space" implies. It uses coworker libraries
+# MM::Metric and MM::Mutation to drive these measurements and transformations.
+#
+# ## What does MM::Space do?
+#
+# MM::Space measures and transforms morphologies. You define *n* dimensions
+# (usually in metric space) and MM::Space will help you take measurements that
+# take all these dimensions into account. In this sense, it's like a
+# multi-metric.
+#
+# Another (perhaps more important) facet of MM::Space is that it allows you to
+# specify a global scaling for each dimension. Given a constrained set of
+# possible morphologies, it's possible to have a "maximum metric distance" in a
+# single dimension of metric space, i.e., the distance between the two morphs
+# that are the furthest apart. MM::Space allows you to specify this for a given
+# space, thereby scaling all distances to the global maximum. A side-note is
+# that it's possible to specify one of these distances as an "edge" in one
+# dimension, allowing for directionality in Metric measurements.
+#
+# ## How do I generate new morphologies?
+#
+# MM::Space contains a library of search functions! So, the Space is treated as
+# a total search space, and the search functions search within that search space
+# (using depth-first, best-first, stochastic search, etc.) to try and find a
+# morphology that satisfies all your needs.
+#
+# ## How do I use MM::Space?
+#
+# Well I'm glad you asked. First, create some Metrics for the two dimensions:
+#
+x = MM::Metric.olm intra_delta: :tenney, inter_delta: :abs
+y = MM::Metric.olm intra_delta: :ratio, inter_delta: :abs
+#
+# Next, decide upon a central "start" morph for our search
+#
+start = %w(1/1 5/4 3/2 8/7 9/8).map {|x| MM::Ratio.from_s(x)}
+#
+# Initialize a Space with two dimensions <x, y>
+# 
+space = Space.new [x, y]
+# 
+# Now let's impose some global scaling limits on either dimension of the space.
+#
+space.max_distance = [8.414, 3.0]
+#
+# Now, let's try and find a morph 0.4 away in both directions at the same time
+#
+space.morph start, to: [0.4, 0.4] # => Returns a morph 
+#
+# Let's add some notion of "up" and "down" to our space. Let the "down" be the
+# vector of the same length as start, but all unison ratios.
+#
+space.lowest = start.map {|x| MM::Ratio.from_s("1/1")}
+# 
+# Now we can morph using distances that are signed in our global space!
+# Basically, this means "find a morph 0.4 away, where the new morph is closer to
+# the lowest point than the starting morph."
+#
+space.morph start, to: [-0.4, 0.4] # => Returns a morph
+#
+# Generate a bunch of distances
+#
+distances = [[0.1, -0.1], [0.2, -0.2], [0.3, -0.3]]
+#
+# Pass the Enumerator to the object. This keeps state and various other
+# information for each iteration, making it faster for successive lookups. 
+# 
+space.morph start, to: distances.each
+#
+# Parallel threads!
+#
+space.morph start, to: distances.each, threads: 4
+#
+# Of course this wouldn't be Ruby if we didn't use a block!
+#
+space.enter do |s|
+  morph start, to: distances.each
+  morph start, to: distances.each, threads: 4
+  # Change some parameter of the space
+  s.lowest = start.map {|x| MM::Ratio.from_s("8/1")}
+  # Etc. etc...
+end
+
