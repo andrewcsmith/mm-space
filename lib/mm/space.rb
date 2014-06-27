@@ -1,5 +1,5 @@
-module Mm; end
+module MM; end
 
-class Mm::Space
+class MM::Space
   VERSION = "1.0.0"
 end
