@@ -2,18 +2,26 @@ module MM; end
 
 class MM::Space
   VERSION = "1.0.0"
-  def initialize metric
+  def initialize metric, delta = 0.001
     @metric = metric
+    @delta = delta
   end
 
+  attr_accessor :delta
   attr_reader :max_distance, :metric
 
   def morph start_morph, to: nil 
     search = MM::Search.new(start_morph)
     search.cost_function = cost_function start_morph, to
     search.adjacent_points_function = adjacent_points_function
-    search.delta = 0.5
-    search.find
+    search.delta = @delta
+    found = search.find
+    # Transpose the morph so that it begins at 1/1
+    if found
+      found.map {|x| x * found[0].reciprocal}
+    else
+      nil
+    end
   end
 
   def max_distance= d

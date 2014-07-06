@@ -2,13 +2,13 @@ require "minitest/autorun"
 require "mm/space"
 require "mm"
 
-module TestMM; end
+class TestMM < Minitest::Test; end
 
-class TestMM::TestSpace < MiniTest::Test
+class TestMM::TestSpace < Minitest::Test
   def setup
     @x = MM::Metric.olm intra_delta: :tenney, inter_delta: :abs
     @y = MM::Metric.olm intra_delta: :log_ratio, inter_delta: :abs
-    @space = MM::Space.new [@x, @y]
+    @space = MM::Space.new [@x, @y], 0.5
   end
 
   # Testing the attribute methods
@@ -48,6 +48,7 @@ class TestMM::TestSpace < MiniTest::Test
     assert_equal start_morph.length, new_morph.length
   end
   def test_morph_proper_distance_away
+    @space.max_distance = [4.907, 0.263]
     x_distance = @x.call(start_morph, new_morph)
     y_distance = @y.call(start_morph, new_morph)
     root_of_sum_of_squares = (x_distance**2 + y_distance**2) ** 0.5
@@ -56,14 +57,15 @@ class TestMM::TestSpace < MiniTest::Test
 
   # Testing that the whole block situation works
   def test_morph_in_block
-    skip "negative distances not implemented"
     # Have to assign as a proper local variable, rather than method
     start = start_morph
-    new_morph = @space.enter { |s| morph start, to: [0.1, -0.1] }
-    assert_in_delta 0.1, @x.call(start, new_morph)
-    assert_in_delta -0.1, @y.call(start, new_morph)
+    @space.enter do |s| 
+      s.delta = 0.001
+      morph start, to: [0.1, -0.1] 
+    end
   end
 
+  # Some helper buddies
   def start_morph
     @start_morph ||= %w(1/1 5/4 3/2).map {|x| MM::Ratio.from_s(x)}
   end
