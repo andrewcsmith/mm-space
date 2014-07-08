@@ -65,8 +65,27 @@ class MM::Space
     }
   end
 
-  def enter &b
-    instance_eval(&b)
+  def enter locals = {}, &block
+    create_local_variables locals
+    output = instance_eval(&block)
+    remove_local_variables locals
+    output
+  end
+
+  private 
+  def create_local_variables locals
+    locals.each do |name, value|
+      define_singleton_method name do 
+        value
+      end
+    end
+  end
+  def remove_local_variables locals
+    locals.each do |name, value|
+      self.singleton_class.class_eval do
+        remove_method name
+      end
+    end
   end
 end
 

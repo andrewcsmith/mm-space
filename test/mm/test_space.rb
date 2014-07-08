@@ -49,20 +49,45 @@ class TestMM::TestSpace < Minitest::Test
   end
   def test_morph_proper_distance_away
     @space.max_distance = [4.907, 0.263]
+    @space.delta = 0.15
     x_distance = @x.call(start_morph, new_morph)
     y_distance = @y.call(start_morph, new_morph)
     root_of_sum_of_squares = (x_distance**2 + y_distance**2) ** 0.5
-    assert_in_delta 0.5657, root_of_sum_of_squares, 0.5
+    assert_in_delta 0.5657, root_of_sum_of_squares, 0.15
   end
 
   # Testing that the whole block situation works
-  def test_morph_in_block
-    # Have to assign as a proper local variable, rather than method
-    start = start_morph
-    @space.enter do |s| 
-      s.delta = 0.001
-      morph start, to: [0.1, -0.1] 
+  def test_morph_enter_finds_in_block
+    @space.max_distance = [4.907, 0.263]
+    @space.delta = 0.15
+    res = @space.enter :start => start_morph do 
+      morph start, to: [0.4, 0.4] 
     end
+    distances = call_metrics [@x, @y], start_morph, res
+    root_of_sos = distances.inject(0) {|m, d| m = m + d**2} ** 0.5
+    assert_in_delta 0.5657, root_of_sos, 0.15
+  end
+  def test_morph_enter_passes_self_to_block
+    res = @space.enter :start => start_morph do |s|
+      s.max_distance = [4.907, 0.263]
+      s.delta = 0.15
+      morph start, to: [0.4, 0.4] 
+    end
+    distances = call_metrics [@x, @y], start_morph, res
+    root_of_sos = distances.inject(0) {|m, d| m = m + d**2} ** 0.5
+    assert_in_delta 0.5657, root_of_sos, 0.15
+  end
+  def test_morph_enter_receives_local_variables
+    res = @space.enter :start => start_morph do
+      start
+    end
+    assert_equal start_morph, res
+  end
+  def test_morph_enter_cleans_up_local_variables
+    res = @space.enter :start => start_morph do
+      start
+    end
+    refute_respond_to @space, :start
   end
 
   # Some helper buddies
@@ -71,6 +96,11 @@ class TestMM::TestSpace < Minitest::Test
   end
   def new_morph
     @new_morph ||= @space.morph start_morph, to: [0.4, 0.4]
+  end
+  def call_metrics metrics, start, result
+    metrics.map do |m|
+      m.call(start, result)
+    end
   end
 
   attr_writer :new_morph
