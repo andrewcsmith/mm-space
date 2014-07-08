@@ -5,10 +5,14 @@ class MM::Space
   def initialize metric, delta = 0.001
     @metric = metric
     @delta = delta
+    @boundaries = nil
+    @adjacent_points_function = nil
+    @cost_function = nil
   end
 
   attr_accessor :delta
-  attr_reader :max_distance, :metric
+  attr_reader :max_distance, :metric, :boundaries
+  attr_writer :adjacent_points_function, :cost_function
 
   def morph start_morph, to: nil 
     search = MM::Search.new(start_morph)
@@ -18,7 +22,11 @@ class MM::Space
     found = search.find
     # Transpose the morph so that it begins at 1/1
     if found
-      found.map {|x| x * found[0].reciprocal}
+      if found[0].respond_to? :reciprocal
+        found.map {|x| x * found[0].reciprocal}
+      else
+        found
+      end
     else
       nil
     end
@@ -51,20 +59,36 @@ class MM::Space
 
   # root of sum of squared errors
   def cost_function start_morph, to
+    @cost_function ||
     ->(current_point) {
       @metric.zip(to).inject(0) {|memo, x|
-        memo = memo + (x[0].call(start_morph, current_point) - x[1]).abs ** 2
+        distance = x[0].call(start_morph, current_point)
+        unless @boundaries.nil?
+          start_to_lowest = x[0].call(start_morph, @boundaries[0][0])
+          current_to_lowest = x[0].call(current_point, @boundaries[0][0])
+          if start_to_lowest > current_to_lowest
+            distance = distance * -1.0
+          end
+        end
+        memo = memo + (distance - x[1]).abs ** 2
       } ** 0.5
     }
   end
 
   # All repeated permutations of a given morph
   def adjacent_points_function
+    @adjacent_points_function ||
     ->(current_point) {
       current_point.repeated_permutation(current_point.size)
     }
   end
 
+  def boundaries= boundaries
+    @boundaries = boundaries
+    self.max_distance = boundaries.zip(@metric).map {|boundary_metric|
+      boundary_metric[1].call(*boundary_metric[0])
+    }
+  end
   def enter locals = {}, &block
     create_local_variables locals
     output = instance_eval(&block)
