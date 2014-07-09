@@ -2,12 +2,28 @@ module MM; end
 
 class MM::Space
   VERSION = "1.0.0"
-  def initialize metric, delta = 0.001
+
+  # Initialization method for MM::Space
+  #
+  # metric - Array of MM::Metrics, where each metric corresponds to a dimension
+  #   in the MM::Space.
+  # opts - Hash with additional parameters. (default: {})
+  #   :delta - The delta of the MM::Search function used in #morph.
+  #     (default: 0.001)
+  #   :boundaries - Array of same size as metric containing pairs [low,
+  #     high], which should be the bounding vectors of a given MM::Space.
+  #   :adjacent_points_function - Proc to use as the
+  #     adjacent_points_function for MM::Search in #morph.
+  #   :cost_function - Proc to use for cost_function for MM::Search in
+  #     #morph.
+  #   
+  # Returns an MM::Space object
+  def initialize metric, opts = {}
     @metric = metric
-    @delta = delta
-    @boundaries = nil
-    @adjacent_points_function = nil
-    @cost_function = nil
+    @delta = opts[:delta] || 0.001
+    @boundaries = opts[:boundaries]
+    @adjacent_points_function = opts[:adjacent_points_function]
+    @cost_function = opts[:cost_function]
   end
 
   attr_accessor :delta
@@ -57,7 +73,16 @@ class MM::Space
     end
   end
 
-  # root of sum of squared errors
+  # Default cost_function to use if no other one is specified. Takes the root of
+  # the sum of the squares, or the generalized Euclidean distance.
+  #
+  # start_morph - morph to begin the morph from. This should be a valid morph in
+  #   the space (i.e., not out of bounds), and should also work with MM::Metric.
+  # to - Destination vector. There should be one dimension in the Array for each
+  #   element in @metric
+  #
+  # Returns a new morph that is "to" distance away from the old morph, within a
+  # range of tolerance of @delta.
   def cost_function start_morph, to
     @cost_function ||
     ->(current_point) {
@@ -75,7 +100,10 @@ class MM::Space
     }
   end
 
-  # All repeated permutations of a given morph
+  # Default adjacent_points_function. It takes all repeated permutations of a
+  # given morph.
+  #
+  # Returns the adjacent_points_function Proc.
   def adjacent_points_function
     @adjacent_points_function ||
     ->(current_point) {
@@ -89,6 +117,18 @@ class MM::Space
       boundary_metric[1].call(*boundary_metric[0])
     }
   end
+  
+  # Allows for morphing within a given block. 
+  #
+  # locals - Hash of key-value pairs where the key is the name of the local
+  #   variable to be created and the value is the value of that variable. Note
+  #   that it actually creates *methods*, rather than *variables*, and that these
+  #   methods refer to instance variables that are then removed. It could get
+  #   buggy if you were to try to create a variable that was the same name as an
+  #   existing method or class variable. (default: {})
+  # block - Block to evaluate within the context of the instance.
+  #
+  # Returns the last element returned by the block.
   def enter locals = {}, &block
     create_local_variables locals
     output = instance_eval(&block)

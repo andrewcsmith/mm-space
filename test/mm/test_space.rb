@@ -8,7 +8,7 @@ class TestMM::TestSpace < Minitest::Test
   def setup
     @x = MM::Metric.olm intra_delta: :tenney, inter_delta: :abs
     @y = MM::Metric.olm intra_delta: :log_ratio, inter_delta: :abs
-    @space = MM::Space.new [@x, @y], 0.5
+    @space = MM::Space.new [@x, @y], delta: 0.5
   end
 
   # Testing the attribute methods
@@ -67,9 +67,11 @@ class TestMM::TestSpace < Minitest::Test
     x_distance = @x.call(start_morph, new_morph)
     assert_in_delta 0.4, x_distance, 0.25
   end
+  # TODO: Perhaps redesign this so that you would pass a "direction" vector as
+  # well? 0 could be "closer to lowest" and 1 could be "closer to highest".
   def test_morph_gets_negative_distances
     metric = MM::Metric.olm intra_delta: :abs, inter_delta: :abs
-    @space = MM::Space.new [metric], 0.001
+    @space = MM::Space.new [metric], delta: 0.001
     @space.boundaries = [[[0.0, 0.0], [0.0, 1.0]]]
     @space.adjacent_points_function = one_tenth_adjacent_point
     start_morph = [0.0, 0.5]
@@ -106,7 +108,7 @@ class TestMM::TestSpace < Minitest::Test
     assert_equal start_morph, res
   end
   def test_morph_enter_cleans_up_local_variables
-    res = @space.enter :start => start_morph do
+    @space.enter :start => start_morph do
       start
     end
     refute_respond_to @space, :start
@@ -121,9 +123,6 @@ class TestMM::TestSpace < Minitest::Test
   end
   def new_morph
     @new_morph ||= @space.morph start_morph, to: [0.4, 0.4]
-  end
-  def new_morph= new_morph
-    @new_morph = new_morph
   end
   def call_metrics metrics, start, result
     metrics.map do |m|
