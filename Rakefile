@@ -18,7 +18,7 @@ Hoe.spec "mm-space" do
   # self.group_name = "mm-space" # if part of an organization/group
   self.readme_file = "README.rdoc"
   require_rubygems_version '>= 1.4'
-  # license "MIT" # this should match the license in the README
+  license "MIT" # this should match the license in the README
 end
 
 # vim: syntax=ruby
