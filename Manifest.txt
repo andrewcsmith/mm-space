@@ -1,8 +1,8 @@
 .autotest
 History.txt
 Manifest.txt
-README.txt
+README.rdoc
 Rakefile
-bin/mm/space
+bin/mm_space
 lib/mm/space.rb
-test/test_mm/space.rb
+test/mm/test_space.rb
