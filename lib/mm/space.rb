@@ -35,18 +35,9 @@ class MM::Space
     search.cost_function = cost_function start_morph, to
     search.adjacent_points_function = adjacent_points_function
     search.delta = @delta
-    found = search.find
-    # Transpose the morph so that it begins at 1/1
-    if found
-      if found[0].respond_to? :reciprocal
-        found.map {|x| x * found[0].reciprocal}
-      else
-        found
-      end
-    else
-      nil
-    end
+    search.find
   end
+
 
   def max_distance= d
     if d.respond_to? :each
@@ -54,6 +45,7 @@ class MM::Space
       d.zip(@metric).each do |distance_and_metric|
         distance_and_metric[1].scale = MM::Scaling.get_global(distance_and_metric[0])
       end
+
       @max_distance = d
     elsif d.is_a? Numeric
       # Wrap it in an Array so it can be zipped
@@ -62,6 +54,7 @@ class MM::Space
       raise ArgumentError, "arg to max_distance= must respond_to? #zip or be Numeric"
     end
   end
+
   def metric= m
     if m.respond_to? :each
       @metric = m
@@ -137,6 +130,7 @@ class MM::Space
   end
 
   private 
+
   def create_local_variables locals
     locals.each do |name, value|
       define_singleton_method name do 
@@ -144,6 +138,7 @@ class MM::Space
       end
     end
   end
+
   def remove_local_variables locals
     locals.each do |name, value|
       self.singleton_class.class_eval do
