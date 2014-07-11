@@ -138,11 +138,7 @@ class TestMM::TestSpace < Minitest::Test
         vz = v.zip(current_point).map {|vp|
           vp = vp.inject(0.0, :+)
         }
-        if vz.any? {|p| p < 0.0 || p > 1.0 }
-          nil
-        else
-          vz
-        end
+        vz.any? {|p| p < 0.0 || p > 1.0 } ? nil : vz
       }.compact
     }
   end
