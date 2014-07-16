@@ -38,7 +38,6 @@ class MM::Space
     search.find
   end
 
-
   def max_distance= d
     if d.respond_to? :each
       # Assign global maxes to each dimension
