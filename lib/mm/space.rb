@@ -73,8 +73,8 @@ class MM::Space
   # to - Destination vector. There should be one dimension in the Array for each
   #   element in @metric
   #
-  # Returns a new morph that is "to" distance away from the old morph, within a
-  # range of tolerance of @delta.
+  # Returns a Proc that calculates how much the current difference vector
+  # differs from the requested difference vector.
   def cost_function start_morph, to
     @cost_function ||
     ->(current_point) {
