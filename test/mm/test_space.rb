@@ -52,10 +52,6 @@ class TestMM::TestSpace < Minitest::Test
     refute_nil new_morph
   end
 
-  def test_morph_includes_origin
-    assert_includes new_morph, MM::Ratio.from_s("1/1")
-  end
-
   def test_morph_same_length
     assert_equal start_morph.length, new_morph.length
   end

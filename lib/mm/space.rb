@@ -3,6 +3,10 @@ module MM; end
 class MM::Space
   VERSION = "1.0.0"
 
+  attr_accessor :delta, :search_klass
+  attr_reader :max_distance, :metric, :boundaries
+  attr_writer :adjacent_points_function, :cost_function
+
   # Initialization method for MM::Space
   #
   # metric - Array of MM::Metrics, where each metric corresponds to a dimension
@@ -20,22 +24,21 @@ class MM::Space
   # Returns an MM::Space object
   def initialize metric, opts = {}
     @metric = metric
+    @search_klass = opts[:search_klass] || MM::Search
     @delta = opts[:delta] || 0.001
     @boundaries = opts[:boundaries]
     @adjacent_points_function = opts[:adjacent_points_function]
     @cost_function = opts[:cost_function]
   end
 
-  attr_accessor :delta
-  attr_reader :max_distance, :metric, :boundaries
-  attr_writer :adjacent_points_function, :cost_function
-
+  # Morphs to a given point within the space
+  #
+  # start_morph - Enumerable object of things to morph from
+  # to - Array to morph to, with one element for each dimension
+  #
+  # Returns Array of resulting MM::Ratio objects
   def morph start_morph, to: nil 
-    search = MM::Search.new(start_morph)
-    search.cost_function = cost_function start_morph, to
-    search.adjacent_points_function = adjacent_points_function
-    search.delta = @delta
-    search.find
+    searcher(start_morph, to).find
   end
 
   def max_distance= d
@@ -123,9 +126,19 @@ class MM::Space
   # Returns the last element returned by the block.
   def enter locals = {}, &block
     create_local_variables locals
-    output = instance_eval(&block)
+    output = instance_eval &block
     remove_local_variables locals
     output
+  end
+
+  protected 
+
+  def searcher start_morph, to
+    search = @search_klass.new(start_morph)
+    search.cost_function = cost_function start_morph, to
+    search.adjacent_points_function = adjacent_points_function
+    search.delta = @delta
+    search
   end
 
   private 
