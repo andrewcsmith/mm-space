@@ -37,8 +37,13 @@ class MM::Space
   # to - Array to morph to, with one element for each dimension
   #
   # Returns Array of resulting MM::Ratio objects
-  def morph start_morph, to: nil 
-    searcher(start_morph, to).find
+  def morph start_morph, to: nil, current_point: nil
+    if current_point
+      # puts "Finding from #{current_point.map {|r| r.join ' '}}"
+      searcher(start_morph, to).find_from_point current_point
+    else
+      searcher(start_morph, to).find
+    end
   end
 
   def max_distance= d
