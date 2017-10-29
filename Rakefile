@@ -12,7 +12,7 @@ Hoe.plugin :minitest
 # Hoe.plugin :rdoc
 # Hoe.plugin :travis
 
-Hoe.spec "mm-space" do
+Hoe.spec "morphological_metrics-space" do
   developer("Andrew Smith", "andrewchristophersmith@gmail.com")
 
   # self.group_name = "mm-space" # if part of an organization/group
