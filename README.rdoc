@@ -1,6 +1,6 @@
 = mm-space
 
-* http://www.github.com/andrewcsmith/mm-space
+* https://github.com/andrewcsmith/mm-space
 
 == DESCRIPTION:
 
