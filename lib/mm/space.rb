@@ -85,19 +85,25 @@ class MM::Space
   # differs from the requested difference vector.
   def cost_function start_morph, to
     @cost_function ||
-    ->(current_point) {
-      @metric.zip(to).inject(0) {|memo, x|
-        distance = x[0].call(start_morph, current_point)
+    ->(point) {
+      @metric.zip(to, lowest(start_morph.size)).inject(0) {|memo, x|
+        single_metric, target_distance, low_boundary = x
+        distance = single_metric.call(start_morph, point)
         unless @boundaries.nil?
-          start_to_lowest = x[0].call(start_morph, @boundaries[0][0])
-          current_to_lowest = x[0].call(current_point, @boundaries[0][0])
+          start_to_lowest = single_metric.call(start_morph, low_boundary)
+          current_to_lowest = single_metric.call(point, low_boundary)
           if start_to_lowest > current_to_lowest
-            distance = distance * -1.0
+            distance *= -1.0
           end
         end
-        memo = memo + (distance - x[1]).abs ** 2
+        memo += (distance - target_distance).abs ** 2
       } ** 0.5
     }
+  end
+
+  def lowest default_len = 1
+    (@boundaries.respond_to?(:map) && @boundaries.map(&:first)) ||
+    default_len.times.map { MM::Ratio.new(1, 1) }
   end
 
   # Default adjacent_points_function. It takes all repeated permutations of a
@@ -113,8 +119,9 @@ class MM::Space
 
   def boundaries= boundaries
     @boundaries = boundaries
-    self.max_distance = boundaries.zip(@metric).map {|boundary_metric|
-      boundary_metric[1].call(*boundary_metric[0])
+    self.max_distance = boundaries.zip(@metric).map {|x|
+      boundary, metric = x
+      metric.call(*boundary)
     }
   end
   
