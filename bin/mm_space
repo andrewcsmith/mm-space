@@ -33,12 +33,18 @@
 # (using depth-first, best-first, stochastic search, etc.) to try and find a
 # morphology that satisfies all your needs.
 #
+# ## First, require the libraries
+# 
+require 'mm'
+require 'mm/space'
+require 'pry'
+#
 # ## How do I use MM::Space?
 #
 # Well I'm glad you asked. First, create some Metrics for the two dimensions:
 #
 x = MM::Metric.olm intra_delta: :tenney, inter_delta: :abs
-y = MM::Metric.olm intra_delta: :ratio, inter_delta: :abs
+y = MM::Metric.olm intra_delta: :log_ratio, inter_delta: :abs
 #
 # Next, decide upon a central "start" morph for our search
 #
@@ -46,45 +52,46 @@ start = %w(1/1 5/4 3/2 8/7 9/8).map {|x| MM::Ratio.from_s(x)}
 #
 # Initialize a Space with two dimensions <x, y>
 # 
-space = Space.new [x, y]
+space = MM::Space.new [x, y], delta: 0.1
+#
+# Let's try and find a morph 0.4 away in both directions at the same time
+#
+puts space.morph start, to: [0.4, 0.4] # => Returns a morph 
 # 
 # Now let's impose some global scaling limits on either dimension of the space.
 #
 space.max_distance = [8.414, 3.0]
 #
-# Now, let's try and find a morph 0.4 away in both directions at the same time
-#
-space.morph start, to: [0.4, 0.4] # => Returns a morph 
-#
 # Let's add some notion of "up" and "down" to our space. Let the "down" be the
-# vector of the same length as start, but all unison ratios.
+# vector of the same length as start, but all unison ratios. The most important
+# thing is to have the sense of a "down" boundary.
 #
-space.lowest = start.map {|x| MM::Ratio.from_s("1/1")}
+space.boundaries = space.metric.map { [start.map {|x| MM::Ratio.new(1, 1)}] }
 # 
 # Now we can morph using distances that are signed in our global space!
 # Basically, this means "find a morph 0.4 away, where the new morph is closer to
 # the lowest point than the starting morph."
 #
-space.morph start, to: [-0.4, 0.4] # => Returns a morph
+# space.morph start, to: [-0.4, 0.4] # => Returns a morph
 #
 # Generate a bunch of distances
 #
-distances = [[0.1, -0.1], [0.2, -0.2], [0.3, -0.3]]
+# distances = [[0.1, -0.1], [0.2, -0.2], [0.3, -0.3]]
 #
 # Pass the Enumerator to the object. This keeps state and various other
 # information for each iteration, making it faster for successive lookups. 
 # 
-space.morph start, to: distances.each
+# space.morph start, to: distances.each
 #
-# Parallel threads!
+# TODO: Parallel threads!
 #
-space.morph start, to: distances.each, threads: 4
+# space.morph start, to: distances.each, threads: 4
 #
 # Of course this wouldn't be Ruby if we didn't use a block!
 #
 space.enter do |s|
   morph start, to: distances.each
-  morph start, to: distances.each, threads: 4
+  # morph start, to: distances.each, threads: 4
   # Change some parameter of the space
   s.lowest = start.map {|x| MM::Ratio.from_s("8/1")}
   # Etc. etc...
