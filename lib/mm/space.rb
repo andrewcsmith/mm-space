@@ -1,10 +1,10 @@
 module MM; end
 
 class MM::Space
-  VERSION = "1.0.0"
+  VERSION = "1.1.0"
 
   attr_accessor :delta, :search_klass
-  attr_reader :max_distance, :metric, :boundaries
+  attr_reader :max_distance, :metric, :boundaries, :search
   attr_writer :adjacent_points_function, :cost_function
 
   # Initialization method for MM::Space
@@ -96,7 +96,7 @@ class MM::Space
             distance *= -1.0
           end
         end
-        memo += (distance - target_distance).abs ** 2
+        memo += (distance - target_distance) ** 2
       } ** 0.5
     }
   end
@@ -146,11 +146,11 @@ class MM::Space
   protected 
 
   def searcher start_morph, to
-    search = @search_klass.new(start_morph)
-    search.cost_function = cost_function start_morph, to
-    search.adjacent_points_function = adjacent_points_function
-    search.delta = @delta
-    search
+    @search = @search_klass.new(start_morph)
+    @search.cost_function = cost_function start_morph, to
+    @search.adjacent_points_function = adjacent_points_function
+    @search.delta = @delta
+    @search
   end
 
   private 
